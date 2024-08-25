@@ -1,4 +1,6 @@
-# Worker / Scheduler POC
+# Postgres as message queue for a distributed workload
+
+## Project Summary
 
 This project is an experiment at using Postgres as a message queue. Postgres holds the details of the tasks - that are inserted at the start of scheduling for simplicity - and it's notification capabilities are used to let the workers know that there are tasks that have not been completed.
 
@@ -14,3 +16,11 @@ make run
 ```
 
 Docker is required on the host machine, but everything else is handled inside the containers.
+
+## License
+
+This project is licensed under the [GLWTSPL](/LICENSE.txt).
+
+![Good Luck](https://github.com/me-shaon/GLWTPL/raw/master/good-luck.gif)
+
+...and godspeed.
