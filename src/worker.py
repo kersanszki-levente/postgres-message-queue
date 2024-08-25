@@ -1,5 +1,6 @@
 import logging
 import random
+from dataclasses import asdict
 from time import sleep
 
 import psycopg
@@ -8,6 +9,7 @@ from psycopg.rows import class_row
 from psycopg.types.enum import EnumInfo, register_enum
 
 from entitites import Task, TaskState
+from settings import ConnectionParameters
 
 GET_TASK_DATA="SELECT * FROM task WHERE id = %(id)s AND state = 'pending' FOR UPDATE NOWAIT;"
 UPDATE_TASK_STATE="UPDATE task SET state = %(task_state)s WHERE id = %(id)s;"
@@ -16,11 +18,11 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("worker")
 
 class Worker:
-    def __init__(self, conn_params: str):
-        self.listener = psycopg.connect(conn_params, autocommit=True)
+    def __init__(self, conn_params: ConnectionParameters):
+        self.listener = psycopg.connect(**asdict(conn_params), autocommit=True)
 
         self.retriever = psycopg.connect(
-            conn_params,
+            **asdict(conn_params),
             row_factory=class_row(Task),
             autocommit=True
         )
@@ -53,13 +55,12 @@ class Worker:
                     .execute(GET_TASK_DATA, params={"id": task_id})
                     .fetchone()
                 )
+                if task is None:
+                    return
                 if task.state in (TaskState.processing, TaskState.completed):
                     return
             except LockNotAvailable:
                 logger.debug(f"Skipping locked task {task_id}")
-                return
-
-            if task is None:
                 return
 
             logger.info(f"Processing task {task.id}")
@@ -73,7 +74,7 @@ class Worker:
 
 
 def main():
-    worker = Worker("host=postgres user=postgres password=secret dbname=scheduling")
+    worker = Worker(ConnectionParameters())
     worker.run()
 
 if __name__ == "__main__":

@@ -1,18 +1,19 @@
 import logging
+from dataclasses import asdict
 from time import sleep
 
 import psycopg
 from psycopg.rows import scalar_row
 
-CONN_PARAMS="host=postgres user=postgres password=secret dbname=scheduling"
+from settings import ConnectionParameters
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("scheduler")
 
 class Scheduler:
-    def __init__(self, conn_params: str, broadcasting_interval: int=1):
+    def __init__(self, conn_params: ConnectionParameters, broadcasting_interval: int=1):
         self.broadcasting_interval = broadcasting_interval
-        self.notifier = psycopg.connect(conn_params, autocommit=True)
+        self.notifier = psycopg.connect(**asdict(conn_params), autocommit=True)
 
     def run(self):
 
@@ -45,8 +46,8 @@ class Scheduler:
         logger.info("Scheduler successfuly completed")
 
 
-def create_tasks(conn_params: str):
-    conn = psycopg.connect(conn_params, autocommit=True)
+def create_tasks(conn_params: ConnectionParameters):
+    conn = psycopg.connect(**asdict(conn_params), autocommit=True)
     for i in range(10):
         with conn.cursor() as cursor:
             result = (
@@ -63,9 +64,10 @@ def create_tasks(conn_params: str):
 
 
 def main():
-    create_tasks(CONN_PARAMS)
+    conn_params = ConnectionParameters()
+    create_tasks(conn_params)
 
-    scheduler = Scheduler(CONN_PARAMS)
+    scheduler = Scheduler(conn_params)
     scheduler.run()
 
 if __name__ == "__main__":
