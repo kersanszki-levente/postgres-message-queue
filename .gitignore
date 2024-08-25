@@ -1,0 +1,6 @@
+.python-version
+pyrightconfig.json
+
+*.py[cod]
+
+.env
